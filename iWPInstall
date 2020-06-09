@@ -1,0 +1,30 @@
+#!/bin/bash
+# Wordpress Install Script
+# Created by Ilias Aidar
+# @iSmartyPro
+
+if [ $# -gt 0 ]; then
+    echo "Downloading Wordpress"
+    wget -q https://wordpress.org/latest.zip
+    echo "Extracting..."
+    unzip -qq latest.zip
+    echo "Cleanup..."
+    mv wordpress/* ./
+    rm -rf wordpress latest.zip
+    echo "Apply Folders and Files Permissions!"
+    chown nginx:nginx  -R * # Let Nginx be owner
+    find . -type d -exec chmod 755 {} \;  # Change directory permissions rwxr-xr-x
+    find . -type f -exec chmod 644 {} \;  # Change file permissions rw-r--r--
+    echo "Creating database..."
+    dbpassword=$(openssl rand -hex 12)
+    mysql -u root -e "CREATE DATABASE $1 CHARACTER SET utf8 COLLATE utf8_general_ci;";
+    mysql -u root -e "CREATE USER '$1'@'localhost' IDENTIFIED BY '$dbpassword';";
+    mysql -u root -e "GRANT EXECUTE, SELECT, SHOW VIEW, ALTER, ALTER ROUTINE, CREATE, CREATE ROUTINE, CREATE TEMPORARY TABLES, CREATE VIEW, DELETE, DROP, EVENT, INDEX, INSERT, REFERENCES, TRIGGER, UPDATE, LOCK TABLES ON $1.* TO '$1'@'localhost';";
+    mysql -u root -e "GRANT USAGE ON $1.* TO '$1'@'localhost' WITH GRANT OPTION;";
+    echo "DBNAME: $1"
+    echo "DBUSER: $1"
+    echo "DBPASS: $dbpassword"
+    echo "Done!"
+else
+    echo "ERROR: You have to enter DB name as parameter."
+fi
